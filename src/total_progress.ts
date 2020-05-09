@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WaniKani: Total Progress
 // @namespace    https://wanikani.com/
-// @version      0.1.1
+// @version      0.1.2
 // @description  A (smaller) re-implementation of https://community.wanikani.com/t/userscript-total-progress-bar-allows-level-progress-removalaka-2cool4progress/38899 using modern js
 // @author       KaHLK
 // @include      /https://(preview|www).wanikani.com/dashboard/
@@ -156,7 +156,8 @@ const EMPTY_MAP: StageMap = {
         kanji: 0,
         vocabulary: 0,
     };
-    const container = div(SCRIPT_ID);
+    const container = el("section");
+    container.id = SCRIPT_ID;
     const inner = div("inner");
     const bar = div();
     const sections: DivMap = {};
