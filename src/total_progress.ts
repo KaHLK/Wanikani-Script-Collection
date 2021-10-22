@@ -8,6 +8,7 @@
 // @include      /https://(preview|www).wanikani.com//
 // @grant        none
 // ==/UserScript==
+// @ts-ignore
 const SCRIPT_ID = "total_progress_bar";
 const STYLE = `
 #${SCRIPT_ID} {
@@ -190,7 +191,7 @@ const EMPTY_MAP: StageMap = {
         wkof.include("Menu,Settings,ItemData")
         await wkof.ready("Menu,Settings,ItemData");
 
-        dialog = prepare_dialog();
+        dialog = prepare_dialog(update_bar);
         dialog.load(SETTINGS_DEFAULT);
         install_menu();
 
@@ -313,21 +314,17 @@ const EMPTY_MAP: StageMap = {
         }
 
         let values: StageMap = {};
+        let values_type: TypeStageMap = {
+            radical: {},
+            kanji: {},
+            vocabulary: {},
+        }
         // Merge sub-sections
         if(!settings.sub_section) {
-            for(let [key, value] of Object.entries(percent)) {
-                let k = key
-                if(key.startsWith("apprentice")) {
-                    k = "apprentice4";
-                } else if(k.startsWith("guru")) {
-                    k = "guru2";
-                }
-                if(values[k] == undefined) {
-                    values[k] = 0;
-                }
-                values[k] += value;
+            values = merge_sections(percent);
+            for(let key of Object.keys(sections_type)) {
+                values_type[key] = merge_sections(percent_type[key]);
             }
-            // TODO: Also merge types
         } else {
             values = percent;
         }
@@ -344,6 +341,23 @@ const EMPTY_MAP: StageMap = {
         for(let key of Object.keys(sections_type)) {
             set_sections(bar_type[key], sections_type[key], percent_type[key], total_type[key], amount[key], settings, mouse_move_type[key]);
         }
+    }
+
+    function merge_sections(data: StageMap): StageMap {
+        let values: StageMap = {};
+        for(let [key, value] of Object.entries(percent)) {
+            let k = key;
+            if(key.startsWith("apprentice")) {
+                k = "apprentice4";
+            } else if(k.startsWith("guru")) {
+                k = "guru2";
+            }
+            if(values[k] === undefined) {
+                values[k] = 0;
+            }
+            values[k] += value;
+        }
+        return values;
     }
 
     function set_sections(bar: HTMLDivElement, sections: DivMap, values: TypeMap, amount: TypeMap, total: number, settings: Settings, listeners: MouseMap) {
@@ -380,100 +394,7 @@ const EMPTY_MAP: StageMap = {
         dialog.open();
     }
 
-    function prepare_dialog() {
-        return new wkof.Settings({
-            script_id: SCRIPT_ID,
-            title: "Total Progress",
-            on_change: update_bar,
-            on_close: update_bar,
-            content: {
-                reverse: {
-                    type: "checkbox",
-                    label: "Reverse order",
-                    hover_tip: "Reverses the order of the stages",
-                    default: true,
-                },
-                sub_section: {
-                    type: "checkbox",
-                    label: "Subsection",
-                    hover_tip: "Divide Apprentice and Guru stages into their subsections",
-                    default: true,
-                },
-                show_type_breakdown: {
-                    type: "checkbox",
-                    label: "Show type breakdown",
-                    hover_tip: "Show bars breakingdown the progress for each item type (radical, kanji, vocabulary)",
-                    default: false,
-                },
-                color_section: {
-                    type: "group",
-                    label: "Colors",
-                    content: {
-                        locked_color: {
-                            type: "color",
-                            label: "Locked/Lesson Color",
-                            hover_tip: "The color of Locked/Lesson items",
-                            default: "#434343",
-                        },
-                        apprentice1_color: {
-                            type: "color",
-                            label: "Apprentice 1 Color",
-                            hover_tip: "The color of Apprentice 2 items",
-                            default: "#ffe0f4",
-                        },
-                        apprentice2_color: {
-                            type: "color",
-                            label: "Apprentice 2 Color",
-                            hover_tip: "The color of Apprentice 2 items",
-                            default: "#ff80d4",
-                        },
-                        apprentice3_color: {
-                            type: "color",
-                            label: "Apprentice 3 Color",
-                            hover_tip: "The color of Apprentice 3 items",
-                            default: "#ff33bb",
-                        },
-                        apprentice4_color: {
-                            type: "color",
-                            label: "Apprentice 4 Color",
-                            hover_tip: "The color of Apprentice 4 items",
-                            default: "#f500a3",
-                        },
-                        guru1_color: {
-                            type: "color",
-                            label: "Guru 1 Color",
-                            hover_tip: "The color of Guru 1 items",
-                            default: "#b95bd1",
-                        },
-                        guru2_color: {
-                            type: "color",
-                            label: "Guru 2 Color",
-                            hover_tip: "The color of Guru 2 items",
-                            default: "#a035bb",
-                        },
-                        master_color: {
-                            type: "color",
-                            label: "Master Color",
-                            hover_tip: "The color of Master items",
-                            default: "#3a5bde",
-                        },
-                        enlightened_color: {
-                            type: "color",
-                            label: "Enlightened Color",
-                            hover_tip: "The color of Enlightened items",
-                            default: "#009eee",
-                        },
-                        burned_color: {
-                            type: "color",
-                            label: "Burned Color",
-                            hover_tip: "The color of Burned items",
-                            default: "#fab623",
-                        },
-                    },
-                },
-            }
-        });
-    }
+
 
     // Add the required styles to the header
     const style = el("style");
@@ -528,4 +449,99 @@ function div(id: string = ""): Section {
 
 function el(el: string): HTMLElement {
     return document.createElement(el);
+}
+
+function prepare_dialog(update_bar: Function) {
+    return new window.wkof.Settings({
+        script_id: SCRIPT_ID,
+        title: "Total Progress",
+        on_change: update_bar,
+        on_close: update_bar,
+        content: {
+            reverse: {
+                type: "checkbox",
+                label: "Reverse order",
+                hover_tip: "Reverses the order of the stages",
+                default: true,
+            },
+            sub_section: {
+                type: "checkbox",
+                label: "Subsection",
+                hover_tip: "Divide Apprentice and Guru stages into their subsections",
+                default: true,
+            },
+            show_type_breakdown: {
+                type: "checkbox",
+                label: "Show type breakdown",
+                hover_tip: "Show bars breakingdown the progress for each item type (radical, kanji, vocabulary)",
+                default: false,
+            },
+            color_section: {
+                type: "group",
+                label: "Colors",
+                content: {
+                    locked_color: {
+                        type: "color",
+                        label: "Locked/Lesson Color",
+                        hover_tip: "The color of Locked/Lesson items",
+                        default: "#434343",
+                    },
+                    apprentice1_color: {
+                        type: "color",
+                        label: "Apprentice 1 Color",
+                        hover_tip: "The color of Apprentice 2 items",
+                        default: "#ffe0f4",
+                    },
+                    apprentice2_color: {
+                        type: "color",
+                        label: "Apprentice 2 Color",
+                        hover_tip: "The color of Apprentice 2 items",
+                        default: "#ff80d4",
+                    },
+                    apprentice3_color: {
+                        type: "color",
+                        label: "Apprentice 3 Color",
+                        hover_tip: "The color of Apprentice 3 items",
+                        default: "#ff33bb",
+                    },
+                    apprentice4_color: {
+                        type: "color",
+                        label: "Apprentice 4 Color",
+                        hover_tip: "The color of Apprentice 4 items",
+                        default: "#f500a3",
+                    },
+                    guru1_color: {
+                        type: "color",
+                        label: "Guru 1 Color",
+                        hover_tip: "The color of Guru 1 items",
+                        default: "#b95bd1",
+                    },
+                    guru2_color: {
+                        type: "color",
+                        label: "Guru 2 Color",
+                        hover_tip: "The color of Guru 2 items",
+                        default: "#a035bb",
+                    },
+                    master_color: {
+                        type: "color",
+                        label: "Master Color",
+                        hover_tip: "The color of Master items",
+                        default: "#3a5bde",
+                    },
+                    enlightened_color: {
+                        type: "color",
+                        label: "Enlightened Color",
+                        hover_tip: "The color of Enlightened items",
+                        default: "#009eee",
+                    },
+                    burned_color: {
+                        type: "color",
+                        label: "Burned Color",
+                        hover_tip: "The color of Burned items",
+                        default: "#fab623",
+                    },
+                },
+            },
+        }
+    });
 }
