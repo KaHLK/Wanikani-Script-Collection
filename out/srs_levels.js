@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wanikani: Levels completed per SRS
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Displays how many levels have been completed to a given SRS level. A re-implementation of https://community.wanikani.com/t/userscript-levels-by-srs/37711 using modern js
 // @author       KaHLK
 // @match        https://www.wanikani.com/dashboard
