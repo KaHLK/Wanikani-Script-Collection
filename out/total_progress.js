@@ -256,22 +256,8 @@ const EMPTY_MAP = {
                 el.style.flexDirection = "row";
             }
         }
-        let values = {};
-        let values_type = {
-            radical: {},
-            kanji: {},
-            vocabulary: {},
-        };
-        // Merge sub-sections
-        if (!settings.sub_section) {
-            values = merge_sections(percent);
-            for (let key of Object.keys(sections_type)) {
-                values_type[key] = merge_sections(percent_type[key]);
-            }
-        }
-        else {
-            values = percent;
-        }
+        let [percent_values, percent_values_type] = map_values(percent, percent_type, settings);
+        let [total_values, total_values_type] = map_values(total, total_type, settings);
         if (settings.show_type_breakdown) {
             inner.style.height = "auto";
         }
@@ -280,14 +266,17 @@ const EMPTY_MAP = {
         }
         container_rect = container.getBoundingClientRect();
         // Update the width, text, and color of the sections
-        set_sections(bar, sections, values, total, item_total, settings, mouse_move);
+        set_sections(bar, sections, percent_values, total_values, item_total, settings, mouse_move);
         for (let key of Object.keys(sections_type)) {
-            set_sections(bar_type[key], sections_type[key], percent_type[key], total_type[key], amount[key], settings, mouse_move_type[key]);
+            set_sections(bar_type[key], sections_type[key], percent_values_type[key], total_values_type[key], amount[key], settings, mouse_move_type[key]);
         }
     }
-    function merge_sections(data) {
+    function merge_sections(data, settings) {
+        if (settings.sub_section) {
+            return data;
+        }
         let values = {};
-        for (let [key, value] of Object.entries(percent)) {
+        for (let [key, value] of Object.entries(data)) {
             let k = key;
             if (key.startsWith("apprentice")) {
                 k = "apprentice4";
@@ -302,6 +291,14 @@ const EMPTY_MAP = {
         }
         return values;
     }
+    function map_values(data, data_by_type, settings) {
+        let values = merge_sections(data, settings);
+        let values_types = {};
+        for (let key of Object.keys(sections_type)) {
+            values_types[key] = merge_sections(data_by_type[key], settings);
+        }
+        return [values, values_types];
+    }
     function set_sections(bar, sections, values, amount, total, settings, listeners) {
         for (let [key, section] of Object.entries(sections)) {
             let value = 0;
@@ -310,7 +307,7 @@ const EMPTY_MAP = {
             }
             section.style.width = `${value}%`;
             section.style.background = settings[`${key}_color`];
-            section.text = `${stage_id_to_title(key)}: ${value.toFixed(2)}% (${amount[key]} / ${total})`;
+            section.text = `${stage_id_to_title(key, !settings.sub_section)}: ${value.toFixed(2)}% (${amount[key]} / ${total})`;
             if (value > 4) {
                 section.innerHTML = `${value.toFixed(2)}%`;
             }
@@ -358,15 +355,33 @@ function stage_num_to_id(stage) {
     }
     return "locked";
 }
-function stage_id_to_title(stage) {
+function stage_id_to_title(stage, merge) {
     switch (stage) {
         case "locked": return "Locked/Lesson";
-        case "apprentice1": return "Apprentice 1";
-        case "apprentice2": return "Apprentice 2";
-        case "apprentice3": return "Apprentice 3";
-        case "apprentice4": return "Apprentice 4";
-        case "guru1": return "Guru 1";
-        case "guru2": return "Guru 2";
+        case "apprentice1": if (!merge) {
+            return "Apprentice 1";
+        }
+        case "apprentice2": if (!merge) {
+            return "Apprentice 2";
+        }
+        case "apprentice3": if (!merge) {
+            return "Apprentice 3";
+        }
+        case "apprentice4": if (!merge) {
+            return "Apprentice 4";
+        }
+        else {
+            return "Apprentice";
+        }
+        case "guru1": if (!merge) {
+            return "Guru 1";
+        }
+        case "guru2": if (!merge) {
+            return "Guru 2";
+        }
+        else {
+            return "Guru";
+        }
         case "master": return "Master";
         case "enlightened": return "Enlightened";
         case "burned": return "Burned";
