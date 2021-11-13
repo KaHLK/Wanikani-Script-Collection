@@ -10,7 +10,7 @@
 // ==/UserScript==
 // @ts-ignore
 const SCRIPT_ID = "total_progress_bar";
-const STYLE = `
+const TOTAL_PROGRESS_STYLE = `
 #${SCRIPT_ID} {
     position: relative;
     padding: 1em;
@@ -66,7 +66,7 @@ const STYLE = `
 `;
 
 type Color = string;
-interface Settings {
+interface TotalProgressSettings {
     [key: string]: any,
     reverse: boolean,
     sub_section: boolean,
@@ -82,21 +82,6 @@ interface Settings {
     burned_color: Color,
     show_type_breakdown: boolean,
 }
-const SETTINGS_DEFAULT: Settings = {
-    reverse: true,
-    sub_section: true,
-    locked_color: "#434343",
-    apprentice1_color: "#ffe0f4",
-    apprentice2_color: "#ff80d4",
-    apprentice3_color: "#ff33bb",
-    apprentice4_color: "#f500a3",
-    guru1_color: "#b95bd1",
-    guru2_color: "#a035bb",
-    master_color: "#3a5bde",
-    enlightened_color: "#009eee",
-    burned_color: "#fab623",
-    show_type_breakdown: false,
-};
 
 interface Section extends HTMLDivElement {
     text: string
@@ -192,7 +177,21 @@ const EMPTY_MAP: StageMap = {
         await wkof.ready("Menu,Settings,ItemData");
 
         dialog = prepare_dialog(update_bar);
-        dialog.load(SETTINGS_DEFAULT);
+        dialog.load({
+            reverse: true,
+            sub_section: true,
+            locked_color: "#434343",
+            apprentice1_color: "#ffe0f4",
+            apprentice2_color: "#ff80d4",
+            apprentice3_color: "#ff33bb",
+            apprentice4_color: "#f500a3",
+            guru1_color: "#b95bd1",
+            guru2_color: "#a035bb",
+            master_color: "#3a5bde",
+            enlightened_color: "#009eee",
+            burned_color: "#fab623",
+            show_type_breakdown: false,
+        });
         install_menu();
 
         const items = await wkof.ItemData.get_items({
@@ -298,7 +297,7 @@ const EMPTY_MAP: StageMap = {
 
     // Update the bar with values from the settings
     function update_bar() {
-        const settings = wkof.settings[SCRIPT_ID] as Settings;
+        const settings = wkof.settings[SCRIPT_ID] as TotalProgressSettings;
 
         // Reverse the bar
         if(settings.reverse) {
@@ -331,7 +330,7 @@ const EMPTY_MAP: StageMap = {
         }
     }
 
-    function merge_sections(data: StageMap, settings: Settings): StageMap {
+    function merge_sections(data: StageMap, settings: TotalProgressSettings): StageMap {
         if(settings.sub_section) {
             return data;
         }
@@ -351,7 +350,7 @@ const EMPTY_MAP: StageMap = {
         return values;
     }
 
-    function map_values(data: StageMap, data_by_type: TypeStageMap, settings: Settings): [StageMap, TypeStageMap] {
+    function map_values(data: StageMap, data_by_type: TypeStageMap, settings: TotalProgressSettings): [StageMap, TypeStageMap] {
         let values = merge_sections(data, settings);
         let values_types: TypeStageMap = {};
         for(let key of Object.keys(sections_type)) {
@@ -361,7 +360,7 @@ const EMPTY_MAP: StageMap = {
         return [values, values_types];
     }
 
-    function set_sections(bar: HTMLDivElement, sections: DivMap, values: TypeMap, amount: TypeMap, total: number, settings: Settings, listeners: MouseMap) {
+    function set_sections(bar: HTMLDivElement, sections: DivMap, values: TypeMap, amount: TypeMap, total: number, settings: TotalProgressSettings, listeners: MouseMap) {
         for(let [key, section] of Object.entries(sections)) {
             let value = 0;
             if(values[key] !== undefined) {
@@ -400,7 +399,7 @@ const EMPTY_MAP: StageMap = {
     // Add the required styles to the header
     const style = el("style");
     style.id = `${SCRIPT_ID}_style`;
-    style.innerHTML = STYLE;
+    style.innerHTML = TOTAL_PROGRESS_STYLE;
 
     document.head.append(style);
 })();

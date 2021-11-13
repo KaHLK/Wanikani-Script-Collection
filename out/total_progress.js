@@ -10,7 +10,7 @@
 // ==/UserScript==
 // @ts-ignore
 const SCRIPT_ID = "total_progress_bar";
-const STYLE = `
+const TOTAL_PROGRESS_STYLE = `
 #${SCRIPT_ID} {
     position: relative;
     padding: 1em;
@@ -64,21 +64,6 @@ const STYLE = `
     border-top-color: #222;
 }
 `;
-const SETTINGS_DEFAULT = {
-    reverse: true,
-    sub_section: true,
-    locked_color: "#434343",
-    apprentice1_color: "#ffe0f4",
-    apprentice2_color: "#ff80d4",
-    apprentice3_color: "#ff33bb",
-    apprentice4_color: "#f500a3",
-    guru1_color: "#b95bd1",
-    guru2_color: "#a035bb",
-    master_color: "#3a5bde",
-    enlightened_color: "#009eee",
-    burned_color: "#fab623",
-    show_type_breakdown: false,
-};
 const EMPTY_MAP = {
     locked: 0,
     apprentice1: 0,
@@ -152,7 +137,21 @@ const EMPTY_MAP = {
         wkof.include("Menu,Settings,ItemData");
         await wkof.ready("Menu,Settings,ItemData");
         dialog = prepare_dialog(update_bar);
-        dialog.load(SETTINGS_DEFAULT);
+        dialog.load({
+            reverse: true,
+            sub_section: true,
+            locked_color: "#434343",
+            apprentice1_color: "#ffe0f4",
+            apprentice2_color: "#ff80d4",
+            apprentice3_color: "#ff33bb",
+            apprentice4_color: "#f500a3",
+            guru1_color: "#b95bd1",
+            guru2_color: "#a035bb",
+            master_color: "#3a5bde",
+            enlightened_color: "#009eee",
+            burned_color: "#fab623",
+            show_type_breakdown: false,
+        });
         install_menu();
         const items = await wkof.ItemData.get_items({
             wk_items: {
@@ -333,7 +332,7 @@ const EMPTY_MAP = {
     // Add the required styles to the header
     const style = el("style");
     style.id = `${SCRIPT_ID}_style`;
-    style.innerHTML = STYLE;
+    style.innerHTML = TOTAL_PROGRESS_STYLE;
     document.head.append(style);
 })();
 // A utility logger function that appends an easy to locate identifier before each log call
