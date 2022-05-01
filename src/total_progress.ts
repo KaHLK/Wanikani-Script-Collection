@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WaniKani: Total Progress
 // @namespace    https://wanikani.com/
-// @version      0.1.4
+// @version      0.2.0
 // @description  A (smaller) re-implementation of https://community.wanikani.com/t/userscript-total-progress-bar-allows-level-progress-removalaka-2cool4progress/38899 using modern js
 // @author       KaHLK
 // @include      /^https://(www|preview).wanikani.com/(dashboard)?$/

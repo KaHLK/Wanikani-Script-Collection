@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         WaniKani: Total Progress
 // @namespace    https://wanikani.com/
-// @version      0.1.4
+// @version      0.2.0
 // @description  A (smaller) re-implementation of https://community.wanikani.com/t/userscript-total-progress-bar-allows-level-progress-removalaka-2cool4progress/38899 using modern js
 // @author       KaHLK
-// @include      /https://(preview|www).wanikani.com/dashboard/
-// @include      /https://(preview|www).wanikani.com//
+// @include      /^https://(www|preview).wanikani.com/(dashboard)?$/
 // @grant        none
 // ==/UserScript==
 // @ts-ignore
@@ -14,7 +13,7 @@ const TOTAL_PROGRESS_STYLE = `
 #${SCRIPT_ID} {
     position: relative;
     padding: 1em;
-    background: #d5d5d5;
+    background: #f4f4f4;
     border-radius: 5px;
 }
 #${SCRIPT_ID} #inner {
@@ -66,6 +65,8 @@ const TOTAL_PROGRESS_STYLE = `
 `;
 const EMPTY_MAP = {
     locked: 0,
+    level: 0,
+    lesson: 0,
     apprentice1: 0,
     apprentice2: 0,
     apprentice3: 0,
@@ -140,12 +141,14 @@ const EMPTY_MAP = {
         dialog.load({
             reverse: true,
             sub_section: true,
-            locked_color: "#434343",
-            apprentice1_color: "#ffe0f4",
-            apprentice2_color: "#ff80d4",
-            apprentice3_color: "#ff33bb",
+            locked_color: "#222222",
+            level_color: "#3a3a3a",
+            lesson_color: "#525252",
+            apprentice1_color: "#933172",
+            apprentice2_color: "#b32082",
+            apprentice3_color: "#d41092",
             apprentice4_color: "#f500a3",
-            guru1_color: "#b95bd1",
+            guru1_color: "#bc23b3",
             guru2_color: "#a035bb",
             master_color: "#3a5bde",
             enlightened_color: "#009eee",
@@ -153,6 +156,7 @@ const EMPTY_MAP = {
             show_type_breakdown: false,
         });
         install_menu();
+        const cur_level = (await wkof.Apiv2.get_endpoint("user")).data.level;
         const items = await wkof.ItemData.get_items({
             wk_items: {
                 options: {
@@ -162,15 +166,18 @@ const EMPTY_MAP = {
         });
         item_total = items.length;
         // Count the amount of items for each srs stage
-        for (let item of items) {
-            const type = item.object;
-            let stage = "locked";
-            if (item.assignments != undefined) {
-                stage = stage_num_to_id(item.assignments.srs_stage);
+        const index = wkof.ItemData.get_index(items, "srs_stage");
+        for (let [stage_num, items] of Object.entries(index)) {
+            for (let item of items) {
+                let stage = stage_num_to_id(Number(stage_num));
+                if (stage === "locked" && item.data.level === cur_level) {
+                    stage = "level";
+                }
+                const type = item.object;
+                amount[type]++;
+                total_type[type][stage]++;
+                total[stage]++;
             }
-            amount[type]++;
-            total_type[type][stage]++;
-            total[stage]++;
         }
         // Setup divs for the bar and calculate the different srs percentages
         document.querySelector(".srs-progress").before(container);
@@ -342,6 +349,7 @@ function log(...args) {
 // A utility function that maps a srs_stage number from the api to a number used for look-up in the maps
 function stage_num_to_id(stage) {
     switch (stage) {
+        case -2: return "lesson";
         case 1: return "apprentice1";
         case 2: return "apprentice2";
         case 3: return "apprentice3";
@@ -356,7 +364,9 @@ function stage_num_to_id(stage) {
 }
 function stage_id_to_title(stage, merge) {
     switch (stage) {
-        case "locked": return "Locked/Lesson";
+        case "locked": return "Locked";
+        case "lesson": return "Lesson";
+        case "lesson": return "Lesson";
         case "apprentice1": if (!merge) {
             return "Apprentice 1";
         }
@@ -426,27 +436,39 @@ function prepare_dialog(update_bar) {
                 content: {
                     locked_color: {
                         type: "color",
-                        label: "Locked/Lesson Color",
-                        hover_tip: "The color of Locked/Lesson items",
-                        default: "#434343",
+                        label: "Locked",
+                        hover_tip: "The color of Locked items",
+                        default: "#222222",
+                    },
+                    level_color: {
+                        type: "color",
+                        label: "Level",
+                        hover_tip: "The color of items that is currently locked but will be available in the current level",
+                        default: "#3a3a3a",
+                    },
+                    lesson_color: {
+                        type: "color",
+                        label: "Locked",
+                        hover_tip: "The color of Lesson items",
+                        default: "#525252",
                     },
                     apprentice1_color: {
                         type: "color",
                         label: "Apprentice 1 Color",
                         hover_tip: "The color of Apprentice 2 items",
-                        default: "#ffe0f4",
+                        default: "#933172",
                     },
                     apprentice2_color: {
                         type: "color",
                         label: "Apprentice 2 Color",
                         hover_tip: "The color of Apprentice 2 items",
-                        default: "#ff80d4",
+                        default: "#b32082",
                     },
                     apprentice3_color: {
                         type: "color",
                         label: "Apprentice 3 Color",
                         hover_tip: "The color of Apprentice 3 items",
-                        default: "#ff33bb",
+                        default: "#d41092",
                     },
                     apprentice4_color: {
                         type: "color",
@@ -458,7 +480,7 @@ function prepare_dialog(update_bar) {
                         type: "color",
                         label: "Guru 1 Color",
                         hover_tip: "The color of Guru 1 items",
-                        default: "#b95bd1",
+                        default: "#bc23b3",
                     },
                     guru2_color: {
                         type: "color",
