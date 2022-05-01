@@ -35,6 +35,8 @@ interface WanikaniOpenFramework {
     settings: {
         [key: string]: Object,
     }
+
+    Apiv2: WKOFApiv2,
 }
 
 type WKOFVersion = "older" | "same" | "newer";
@@ -287,4 +289,22 @@ interface WKOFDialog {
         open: () => void,
         close: () => void,
     }
+}
+
+interface WKOFApiv2 {
+    fetch_endpoint: (endpoint: string, config?: object) => Promise<any>
+    get_endpoint: (endpoint: string, config?: object) => Promise<any>
+    clear_cache: (include_non_user?: boolean) => Promise<void>
+    is_valid_apikey_format: (apikey: string) => boolean
+}
+
+interface WKOFApiv2FetchOptions {
+    progress_callback?: (endpoint_name: string, first_new: number, so_far: number, total: number) => void
+    last_update?: Date
+    filters?: WKOFGetItemConfig["wk_items"]["filters"]
+}
+
+interface WKOFApiv2GetOptions {
+    progress_callback?: (endpoint_name: string, first_new: number, so_far: number, total: number) => void
+    forc_update?: boolean
 }
